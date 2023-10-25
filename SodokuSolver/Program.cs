@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 class SudokuSolver
 {
@@ -6,30 +7,79 @@ class SudokuSolver
 
     public static void Main(string[] args)
     {
-        int[,] puzzle = {
-            {5, 3, 0, 0, 7, 0, 0, 0, 0},
-            {6, 0, 0, 1, 9, 5, 0, 0, 0},
-            {0, 9, 8, 0, 0, 0, 0, 6, 0},
-            {8, 0, 0, 0, 6, 0, 0, 0, 3},
-            {4, 0, 0, 8, 0, 3, 0, 0, 1},
-            {7, 0, 0, 0, 2, 0, 0, 0, 6},
-            {0, 6, 0, 0, 0, 0, 2, 8, 0},
-            {0, 0, 0, 4, 1, 9, 0, 0, 5},
-            {0, 0, 0, 0, 8, 0, 0, 7, 9}
-        };
+        string filePath = "SudokuTable.txt";
 
-        int[,] solvedPuzzle = new int[9, 9];
-        Array.Copy(puzzle, solvedPuzzle, 9 * 9);
-
-        if (SolveSudoku(solvedPuzzle))
+        if (File.Exists(filePath))
         {
-            Console.WriteLine("Solved Sudoku:");
-            PrintSudoku(solvedPuzzle, puzzle);
+            int[,] puzzle = ReadSudokuFromFile(filePath);
+
+            if (puzzle != null)
+            {
+                int[,] solvedPuzzle = new int[9, 9];
+                Array.Copy(puzzle, solvedPuzzle, 9 * 9);
+
+                if (SolveSudoku(solvedPuzzle))
+                {
+                    Console.WriteLine("Solved Sudoku:");
+                    PrintSudoku(solvedPuzzle, puzzle);
+
+                    // Save the solved Sudoku to a new file
+                    WriteSudokuToFile("SolvedSudoku.txt", solvedPuzzle);
+                }
+                else
+                {
+                    Console.WriteLine("No solution exists.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Invalid Sudoku format in the file.");
+            }
         }
         else
         {
-            Console.WriteLine("No solution exists.");
+            Console.WriteLine("File not found: " + filePath);
         }
+    }
+
+    static int[,] ReadSudokuFromFile(string filePath)
+    {
+        int[,] puzzle = new int[9, 9];
+
+        try
+        {
+            string[] lines = File.ReadAllLines(filePath);
+            for (int i = 0; i < 9; i++)
+            {
+                string line = lines[i];
+                if (line.Length != 9)
+                {
+                    return null; // Invalid Sudoku format
+                }
+
+                for (int j = 0; j < 9; j++)
+                {
+                    if (line[j] == '.')
+                    {
+                        puzzle[i, j] = 0;
+                    }
+                    else if (char.IsDigit(line[j]))
+                    {
+                        puzzle[i, j] = int.Parse(line[j].ToString());
+                    }
+                    else
+                    {
+                        return null; // Invalid character in Sudoku
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            return null; // Error while reading the file
+        }
+
+        return puzzle;
     }
 
     static bool SolveSudoku(int[,] puzzle)
@@ -136,5 +186,21 @@ class SudokuSolver
             Console.WriteLine();
         }
         Console.WriteLine("Steps to solve the puzzle: " + step);
+    }
+
+    static void WriteSudokuToFile(string filePath, int[,] puzzle)
+    {
+        using (System.IO.StreamWriter file = new System.IO.StreamWriter(filePath))
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    file.Write(puzzle[i, j] + " ");
+                }
+                file.WriteLine();
+            }
+        }
+        Console.WriteLine("Solved Sudoku written to " + filePath);
     }
 }
